@@ -1,62 +1,102 @@
 # FinAlly — AI Trading Workstation
 
-A visually stunning AI-powered trading workstation that streams live market data, simulates portfolio trading, and integrates an LLM chat assistant that can analyze positions and execute trades via natural language.
+A visually stunning, AI-powered trading workstation that streams live market data, supports simulated trading across US and Indian markets, and includes an LLM chat assistant that can analyze your portfolio and execute trades on your behalf.
 
-Built entirely by coding agents as a capstone project for an agentic AI coding course.
+Built as a capstone project for an agentic AI coding course — demonstrating how orchestrated AI agents can produce a production-quality full-stack application.
+
+---
 
 ## Features
 
-- **Live price streaming** via SSE with green/red flash animations
-- **Simulated portfolio** — $10k virtual cash, market orders, instant fills
-- **Portfolio visualizations** — heatmap (treemap), P&L chart, positions table
-- **AI chat assistant** — analyzes holdings, suggests and auto-executes trades
-- **Watchlist management** — track tickers manually or via AI
-- **Dark terminal aesthetic** — Bloomberg-inspired, data-dense layout
+- **Dual-market**: toggle between US (USD) and India (INR) wallets — independent watchlists, positions, and P&L
+- **Live prices**: real-time streaming via SSE, with green/red flash animations on price changes
+- **Simulated trading**: market orders, instant fill, no fees — $10,000 USD and ₹1,00,000 INR to start
+- **Portfolio dashboard**: heatmap (treemap), P&L chart, positions table — all per active market
+- **AI chat assistant**: analyze your portfolio and execute trades via natural language (powered by Cerebras/OpenRouter)
+- **Sparklines**: per-ticker mini-charts built progressively from the live stream
+- **Dark terminal aesthetic**: Bloomberg-inspired, desktop-first layout
 
-## Architecture
+## Tech Stack
 
-Single Docker container serving everything on port 8000:
-
-- **Frontend**: Next.js (static export) with TypeScript and Tailwind CSS
-- **Backend**: FastAPI (Python/uv) with SSE streaming
-- **Database**: SQLite with lazy initialization
-- **AI**: LiteLLM → OpenRouter (Cerebras inference) with structured outputs
-- **Market data**: Built-in GBM simulator (default) or Massive API (optional)
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js (TypeScript, static export), Tailwind CSS |
+| Backend | FastAPI (Python, uv), SQLite |
+| Streaming | Server-Sent Events (SSE) |
+| Market data | Simulator (default), Massive API (US, optional), yfinance (India) |
+| AI | LiteLLM → OpenRouter → Cerebras (`openai/gpt-oss-120b`) |
+| Deployment | Single Docker container, port 8000 |
 
 ## Quick Start
 
+### Prerequisites
+
+- Docker
+- (Optional) [OpenRouter API key](https://openrouter.ai) for AI chat
+- (Optional) Massive API key for live US market data
+
+### Setup
+
 ```bash
-# Clone and configure
 cp .env.example .env
-# Add your OPENROUTER_API_KEY to .env
+# Edit .env and add your OPENROUTER_API_KEY
+```
 
-# Run with Docker
-docker build -t finally .
-docker run -v finally-data:/app/db -p 8000:8000 --env-file .env finally
+### Run
 
-# Open http://localhost:8000
+**macOS / Linux**
+```bash
+./scripts/start_mac.sh
+```
+
+**Windows (PowerShell)**
+```powershell
+./scripts/start_windows.ps1
+```
+
+Then open [http://localhost:8000](http://localhost:8000).
+
+### Stop
+
+```bash
+./scripts/stop_mac.sh        # macOS/Linux
+./scripts/stop_windows.ps1   # Windows
 ```
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Yes | OpenRouter API key for AI chat |
-| `MASSIVE_API_KEY` | No | Massive (Polygon.io) key for real market data; omit to use simulator |
-| `LLM_MOCK` | No | Set `true` for deterministic mock LLM responses (testing) |
+```bash
+OPENROUTER_API_KEY=   # Required for AI chat
+MASSIVE_API_KEY=      # Optional: enables live US market data (else simulator)
+LLM_MOCK=false        # Set true for deterministic responses in tests
+```
 
 ## Project Structure
 
 ```
 finally/
-├── frontend/    # Next.js static export
-├── backend/     # FastAPI uv project
-├── planning/    # Project documentation and agent contracts
-├── test/        # Playwright E2E tests
-├── db/          # SQLite volume mount (runtime)
-└── scripts/     # Start/stop helpers
+├── frontend/          # Next.js TypeScript app (static export)
+├── backend/           # FastAPI uv project
+│   └── db/            # Schema definitions and seed logic
+├── db/                # Runtime SQLite volume mount (finally.db gitignored)
+├── scripts/           # Start/stop Docker wrappers
+├── test/              # Playwright E2E tests
+├── planning/          # Architecture docs and agent reference
+│   └── PLAN.md        # Full project specification
+├── Dockerfile
+└── docker-compose.yml
 ```
 
-## License
+## Markets
 
-See [LICENSE](LICENSE).
+| Market | Currency | Starting Balance | Data Source |
+|--------|----------|-----------------|-------------|
+| US | USD | $10,000.00 | Simulator or Massive API |
+| India | INR | ₹1,00,000 | yfinance (NSE/BSE) |
+
+Indian tickers use `.NS` (NSE) or `.BO` (BSE) suffixes (e.g. `RELIANCE.NS`). Bare names are resolved automatically.
+
+## Development
+
+See [`planning/PLAN.md`](planning/PLAN.md) for the full architecture, API reference, database schema, and design decisions.
+# INUS_Finally
