@@ -1,3 +1,8 @@
+# SQLite database file (volume-mounted at runtime; db/.gitkeep preserves the dir)
+db/finally.db
+db/finally.db-shm
+db/finally.db-wal
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
