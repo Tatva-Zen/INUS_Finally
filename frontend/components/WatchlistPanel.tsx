@@ -36,6 +36,12 @@ export default function WatchlistPanel({ activeMarket, prices, flashes, selected
   const priceHistory = useRef<Map<string, number[]>>(new Map());
   const firstPrices = useRef<Map<string, number>>(new Map());
 
+  // Reset sparkline history when market changes
+  useEffect(() => {
+    priceHistory.current = new Map();
+    firstPrices.current = new Map();
+  }, [activeMarket]);
+
   // Accumulate sparkline data
   useEffect(() => {
     for (const item of items) {

@@ -8,11 +8,23 @@ interface Props {
   onTradeComplete: () => void;
 }
 
-function isValidTickerForMarket(ticker: string, market: Market): boolean {
-  const isIndian = ticker.endsWith('.NS') || ticker.endsWith('.BO');
-  if (market === 'us') return !isIndian;
-  if (market === 'in') return isIndian;
-  return false;
+/** Resolve a ticker to its canonical form for the given market.
+ *  India market: bare names (BEL) are tried as BEL.NS first.
+ *  US market: reject any .NS/.BO suffix.
+ *  Returns null if the ticker is clearly for the wrong market.
+ */
+function resolveTickerForMarket(raw: string, market: Market): { ticker: string } | { error: string } {
+  const t = raw.trim().toUpperCase();
+  const isIndian = t.endsWith('.NS') || t.endsWith('.BO');
+
+  if (market === 'us') {
+    if (isIndian) return { error: `${t} is an India ticker — switch to India to trade it` };
+    return { ticker: t };
+  }
+
+  // India market: accept .NS/.BO as-is; auto-append .NS for bare names
+  if (isIndian) return { ticker: t };
+  return { ticker: `${t}.NS` };  // backend will reject if it doesn't exist
 }
 
 export default function TradeBar({ activeMarket, onTradeComplete }: Props) {
@@ -27,26 +39,20 @@ export default function TradeBar({ activeMarket, onTradeComplete }: Props) {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const validate = (): boolean => {
-    const t = ticker.trim().toUpperCase();
-    if (!t) { setError('Enter a ticker'); return false; }
-    if (!isValidTickerForMarket(t, activeMarket)) {
-      const other = activeMarket === 'us' ? 'India' : 'US';
-      setError(`${t} is an ${other} ticker — switch to ${other} to trade it`);
-      return false;
-    }
-    const qty = parseFloat(quantity);
-    if (!qty || qty <= 0) { setError('Enter a valid quantity'); return false; }
-    setError('');
-    return true;
-  };
-
   const doTrade = async (side: 'buy' | 'sell') => {
-    if (!validate()) return;
+    const raw = ticker.trim().toUpperCase();
+    if (!raw) { setError('Enter a ticker'); return; }
+    const qty = parseFloat(quantity);
+    if (!qty || qty <= 0) { setError('Enter a valid quantity'); return; }
+
+    const resolved = resolveTickerForMarket(raw, activeMarket);
+    if ('error' in resolved) { setError(resolved.error); return; }
+
+    setError('');
     setLoading(true);
     try {
-      await executeTrade(activeMarket, ticker.trim().toUpperCase(), side, parseFloat(quantity));
-      showToast(`${side === 'buy' ? 'Bought' : 'Sold'} ${quantity} ${ticker.trim().toUpperCase()}`);
+      await executeTrade(activeMarket, resolved.ticker, side, qty);
+      showToast(`${side === 'buy' ? 'Bought' : 'Sold'} ${qty} ${resolved.ticker}`);
       setTicker('');
       setQuantity('');
       onTradeComplete();

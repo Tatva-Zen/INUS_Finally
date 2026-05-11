@@ -15,7 +15,7 @@ export function useWatchlist(market: Market) {
     finally { setLoading(false); }
   }, [market]);
 
-  useEffect(() => { setLoading(true); refresh(); }, [market, refresh]);
+  useEffect(() => { setItems([]); setLoading(true); refresh(); }, [market, refresh]);
 
   const addTicker = async (ticker: string) => {
     const item = await apiAdd(market, ticker);
