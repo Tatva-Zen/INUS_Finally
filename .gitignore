@@ -2,6 +2,12 @@
 db/finally.db
 db/finally.db-shm
 db/finally.db-wal
+backend/db/
+
+# Test infrastructure
+test/node_modules/
+test/test-results/
+test/.playwright/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
